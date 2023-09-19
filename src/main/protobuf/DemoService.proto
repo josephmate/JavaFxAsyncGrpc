@@ -1,0 +1,32 @@
+syntax = "proto2";
+
+package com.josephmate;
+
+message AsyncPartialRequest {
+    optional int32 counter = 1;
+}
+
+message AsyncPartialResponse {
+    optional int32 counter = 1;
+}
+message SynchronousCompleteRequest {
+    repeated int32 counter = 1;
+}
+
+message SynchronousCompleteResponse {
+    repeated int32 counter = 1;
+}
+
+service DemoService {
+    // Method 1: Bidirectional streaming asynchronous
+    rpc BidirectionalAsync(stream AsyncPartialRequest) returns (stream AsyncPartialResponse);
+
+    // Method 2: Server response is asynchronous
+    rpc OnlyResponseAsync(SynchronousCompleteRequest) returns (stream AsyncPartialResponse);
+
+    // Method 3: Server request is asynchronous
+    rpc OnlyRequestAsync(stream AsyncPartialRequest) returns (SynchronousCompleteResponse);
+
+    // Method 4: Neither is asynchronous
+    rpc AllSynchronous(SynchronousCompleteRequest) returns (SynchronousCompleteResponse);
+}
