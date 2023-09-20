@@ -13,3 +13,9 @@ Terminal 2:
 java -cp .\target\java-fx-async-grpc-1-shaded.jar ClientMain --method AllSynchronous --port 64610
 
 ```
+
+```shell
+java -cp .\target\java-fx-async-grpc-1-shaded.jar ClientMain --method BidirectionalAsync --port 64610
+
+```
+
