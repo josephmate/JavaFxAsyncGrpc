@@ -29,7 +29,7 @@ public class ClientMain {
     enum Method {
         BidirectionalAsync,
         OnlyResponseAsync,
-        OnlyRequestAsync,
+        OnlyResponseAsyncBroken,
         AllSynchronous
     }
 
@@ -41,26 +41,41 @@ public class ClientMain {
     }
 
     private void run() throws Exception {
+        final ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", port)
+            .usePlaintext() // insecure
+            .build();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            // allow any left over connections to finish what their doing.
+            while (!channel.isTerminated()) {
+                channel.shutdown();
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }));
+
         switch (method) {
             case AllSynchronous:
-                allSynchronous();
+                allSynchronous(channel);
                 break;
             case OnlyResponseAsync:
-                onlyResponseAsync();
+                onlyResponseAsync(channel);
+                break;
+            case OnlyResponseAsyncBroken:
+                onlyResponseAsyncBroken(channel);
                 break;
             case BidirectionalAsync:
-                bidirectionalAsync();
+                bidirectionalAsync(channel);
                 break;
             default:
                 throw new UnsupportedOperationException(method + " not implemented yet");
         }
     }
 
-    private void allSynchronous() {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", port)
-            .usePlaintext() // insecure
-            .build();
-
+    private void allSynchronous(ManagedChannel channel) {
         DemoServiceGrpc.DemoServiceBlockingStub blockingStub = DemoServiceGrpc.newBlockingStub(channel);
 
         System.out.println("Please enter numbers to send separated by newline.");
@@ -92,15 +107,9 @@ public class ClientMain {
         for(int val : response.getCounterList()) {
             System.out.println(val);
         }
-
-        channel.shutdownNow();
     }
 
-    private void onlyResponseAsync() throws Exception {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", port)
-            .usePlaintext() // insecure
-            .build();
-
+    private void onlyResponseAsync(ManagedChannel channel) throws Exception {
         DemoServiceGrpc.DemoServiceStub stub = DemoServiceGrpc.newStub(channel);
 
         System.out.println("Please enter numbers to send separated by newline.");
@@ -147,14 +156,63 @@ public class ClientMain {
         });
         countDownLatch.await();
         System.out.println("Server completed response");
-        channel.shutdownNow();
     }
 
-    private void bidirectionalAsync() throws Exception {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", port)
-            .usePlaintext() // insecure
-            .build();
+    /**
+     * For some reason this one only works on a fresh server.
+     * Not going to spend time debugging it.
+     *
+     * @param channel
+     * @throws Exception
+     */
+    private void onlyResponseAsyncBroken(ManagedChannel channel) throws Exception {
+        DemoServiceGrpc.DemoServiceStub stub = DemoServiceGrpc.newStub(channel);
 
+        System.out.println("Please enter numbers to send separated by newline.");
+        System.out.println("enter 'send', 'end' or 'stop' to send the request.");
+        SynchronousCompleteRequest.Builder builder = SynchronousCompleteRequest.newBuilder();
+        Scanner scanner = new Scanner(System.in);
+        while (scanner.hasNextLine()) {
+            String input = scanner.nextLine().trim();
+
+            if (
+                input.equalsIgnoreCase("send")
+                    || input.equalsIgnoreCase("stop")
+                    || input.equalsIgnoreCase("end")
+            ) {
+                break;
+            }
+
+            try {
+                int number = Integer.parseInt(input);
+                builder.addCounter(number);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number, stop, or end");
+            }
+        }
+        scanner.close();
+
+        System.out.println("Receiving numbers from server:");
+        stub.onlyResponseAsync(builder.build(), new StreamObserver<AsyncPartialResponse>() {
+            @Override
+            public void onNext(AsyncPartialResponse asyncPartialResponse) {
+                System.out.println(asyncPartialResponse.getCounter());
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+            }
+        });
+
+        System.out.println("Server completed response");
+    }
+
+    private void bidirectionalAsync(ManagedChannel channel) throws Exception {
         DemoServiceGrpc.DemoServiceStub stub = DemoServiceGrpc.newStub(channel);
 
         final CountDownLatch allDoneLatch = new CountDownLatch(1);
@@ -176,7 +234,6 @@ public class ClientMain {
 
         allDoneLatch.await();
         System.out.println("Server stopped. Conversation complete.");
-        channel.shutdownNow();
     }
 }
 

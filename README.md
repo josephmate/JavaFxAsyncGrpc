@@ -15,6 +15,16 @@ java -cp .\target\java-fx-async-grpc-1-shaded.jar ClientMain --method AllSynchro
 ```
 
 ```shell
+java -cp .\target\java-fx-async-grpc-1-shaded.jar ClientMain --method OnlyResponseAsync --port 64610
+
+```
+
+```shell
+java -cp .\target\java-fx-async-grpc-1-shaded.jar ClientMain --method OnlyResponseAsyncBroken --port 64610
+
+```
+
+```shell
 java -cp .\target\java-fx-async-grpc-1-shaded.jar ClientMain --method BidirectionalAsync --port 64610
 
 ```
