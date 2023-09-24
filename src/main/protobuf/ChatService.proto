@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package com.josephmate;
+
+message SendMessageToServer {
+    optional string message = 1;
+}
+
+message ServerBroadcastsToEveryone {
+    optional string message = 1;
+}
+
+service ChatService {
+    rpc chat(stream SendMessageToServer) returns (stream ServerBroadcastsToEveryone);
+}

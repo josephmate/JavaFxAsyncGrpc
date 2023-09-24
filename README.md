@@ -86,3 +86,20 @@ java -cp .\target\java-fx-async-grpc-1-shaded.jar ClientMain --method Bidirectio
 How can you send gigantic response that consumes too much memory using a stream response?
 
 How would you use bi-direction gRPC to implement a chat server?
+
+Solution:
+
+Chat Server:
+```shell
+java -cp .\target\java-fx-async-grpc-1-shaded.jar ChatServerMain
+```
+
+Client 1:
+```shell
+java -cp .\target\java-fx-async-grpc-1-shaded.jar ChatClientMain --port 53215
+```
+
+Client 2:
+```shell
+java -cp .\target\java-fx-async-grpc-1-shaded.jar ChatClientMain --port 53215
+```
