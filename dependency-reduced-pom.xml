@@ -24,9 +24,12 @@
                 </outputTarget>
                 <outputTarget>
                   <type>grpc-java</type>
-                  <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.0.1</pluginArtifact>
+                  <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.58.0</pluginArtifact>
                 </outputTarget>
               </outputTargets>
+              <protocArtifact>com.google.protobuf:protoc:3.21.5</protocArtifact>
+              <protocVersion>3.21.5</protocVersion>
+              <includeStdTypes>true</includeStdTypes>
             </configuration>
           </execution>
         </executions>
